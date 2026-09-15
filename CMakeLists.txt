@@ -25,7 +25,7 @@ if (WIN32)
         src/windows/streamproof_overlay.cpp
         src/windows/streamproof_overlay.hpp
     )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_link_libraries(${PROJECT_NAME}
         d2d1
         d3d11
         dcomp

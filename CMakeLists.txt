@@ -18,6 +18,22 @@ add_library(${PROJECT_NAME} SHARED
     src/feature_pack.cpp
 )
 
+# Gate A only: keep the protected-overlay prototype isolated to native Windows.
+# Production presentation integration remains intentionally out of scope here.
+if (WIN32)
+    target_sources(${PROJECT_NAME} PRIVATE
+        src/windows/streamproof_overlay.cpp
+        src/windows/streamproof_overlay.hpp
+    )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        d2d1
+        d3d11
+        dcomp
+        dwmapi
+        dxgi
+    )
+endif()
+
 # Keep iOS explicitly arm64 even if this project is built outside the official
 # Geode GitHub Action (for example from Xcode/CMake on a Mac).
 if (CMAKE_SYSTEM_NAME STREQUAL "iOS" OR GEODE_TARGET_PLATFORM STREQUAL "iOS")

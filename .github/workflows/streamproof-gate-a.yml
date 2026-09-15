@@ -22,6 +22,8 @@ jobs:
         with:
           submodules: recursive
 
+      # These checks intentionally cover only Gate A's non-negotiable static
+      # invariants. Runtime capture behavior remains a later blocking gate.
       - name: Verify fail-closed source invariants
         shell: pwsh
         run: |

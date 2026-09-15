@@ -22,6 +22,7 @@ add_library(${PROJECT_NAME} SHARED
 # Production presentation integration remains intentionally out of scope here.
 if (WIN32)
     target_sources(${PROJECT_NAME} PRIVATE
+        src/windows/glfw_native_bridge.cpp
         src/windows/streamproof_overlay.cpp
         src/windows/streamproof_overlay.hpp
     )

@@ -25,6 +25,10 @@ if (WIN32)
         src/windows/streamproof_overlay.cpp
         src/windows/streamproof_overlay.hpp
     )
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        "$ENV{GEODE_SDK}/loader/include/Geode/cocos/robtop"
+    )
+    target_compile_definitions(${PROJECT_NAME} PRIVATE GLFW_EXPOSE_NATIVE_WGL)
     target_link_libraries(${PROJECT_NAME}
         d2d1
         d3d11

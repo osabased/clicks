@@ -1,0 +1,50 @@
+name: Streamproof Gate A Windows build
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/streamproof-gate-a.yml'
+      - 'CMakeLists.txt'
+      - 'src/windows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows64:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build installable Windows64 package
+        id: geode_build
+        uses: geode-sdk/build-geode-mod@main
+        with:
+          target: Win64
+          sdk: given
+          build-config: Release
+          use-lto: true
+
+      - name: Verify package exists
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = '${{ steps.geode_build.outputs.build-output }}'
+          $packages = @(Get-ChildItem -Path $out -Filter '*.geode' -File)
+          if ($packages.Count -ne 1) {
+            throw "Expected exactly one installable .geode package; found $($packages.Count)."
+          }
+          "PACKAGE=$($packages[0].FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload installable prototype
+        uses: actions/upload-artifact@v4
+        with:
+          name: streamproof-gate-a-windows64
+          path: ${{ env.PACKAGE }}
+          if-no-files-found: error

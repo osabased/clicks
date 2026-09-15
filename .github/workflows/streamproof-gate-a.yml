@@ -22,6 +22,56 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Verify fail-closed source invariants
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source = Get-Content 'src/windows/streamproof_overlay.cpp' -Raw
+          $bridge = Get-Content 'src/windows/glfw_native_bridge.cpp' -Raw
+
+          foreach ($required in @(
+            'glfwGetWin32Window',
+            'WindowFromDC',
+            'WS_EX_NOACTIVATE',
+            'WS_EX_NOREDIRECTIONBITMAP',
+            'SetWindowDisplayAffinity',
+            'WDA_EXCLUDEFROMCAPTURE',
+            'D3D11CreateDevice',
+            'CreateSwapChainForComposition',
+            'DCompositionCreateDevice',
+            'CLICK_INDICATORS_STREAMPROOF_FORCE_AFFINITY_FAILURE',
+            'CLICK_INDICATORS_STREAMPROOF_FORCE_GRAPHICS_FAILURE'
+          )) {
+            if (-not $source.Contains($required)) {
+              throw "Missing required Gate A invariant: $required"
+            }
+          }
+
+          if ($source.Contains('WS_EX_TOPMOST') -or $source.Contains('HWND_TOPMOST')) {
+            throw 'Gate A overlay must never be globally topmost.'
+          }
+          if ($source.Contains('FindWindow') -or $bridge.Contains('FindWindow')) {
+            throw 'Title/class based FindWindow lookup is forbidden.'
+          }
+
+          $affinity = $source.IndexOf('if (!m_impl->applyCaptureProtection())')
+          $graphics = $source.IndexOf('if (!m_impl->initializeGraphics(width, height))')
+          $render = $source.IndexOf('if (!m_impl->renderTestFrame(width, height))')
+          $show = $source.IndexOf('if (!m_impl->showProtected())')
+          if ($affinity -lt 0 -or $graphics -lt 0 -or $render -lt 0 -or $show -lt 0) {
+            throw 'Unable to locate Gate A initialization sequence.'
+          }
+          if (-not ($affinity -lt $graphics -and $graphics -lt $render -and $render -lt $show)) {
+            throw 'Protection/graphics/render/show ordering regressed.'
+          }
+
+          $showProtected = $source.IndexOf('bool showProtected()')
+          $readyGuard = $source.IndexOf('!overlay || !affinityReady || !graphicsReady', $showProtected)
+          $showVisible = $source.IndexOf('ShowWindow(overlay, SW_SHOWNOACTIVATE)', $showProtected)
+          if ($showProtected -lt 0 -or $readyGuard -lt 0 -or $showVisible -lt 0 -or $readyGuard -gt $showVisible) {
+            throw 'Visible ShowWindow is no longer guarded by protection and graphics readiness.'
+          }
+
       - name: Build installable Windows64 package
         id: geode_build
         uses: geode-sdk/build-geode-mod@main

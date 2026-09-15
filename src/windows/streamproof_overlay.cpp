@@ -209,12 +209,12 @@ struct StreamproofOverlay::Impl {
 
         return SetWindowPos(
             overlay,
-            game,
+            nullptr,
             origin.x,
             origin.y,
             static_cast<int>(width),
             static_cast<int>(height),
-            SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_HIDEWINDOW
+            SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_HIDEWINDOW
         ) != FALSE;
     }
 
@@ -522,8 +522,14 @@ bool StreamproofOverlay::initialize() {
         m_impl->fail("unable to acquire a valid current-process top-level Geometry Dash HWND");
         return false;
     }
-    if (glfwWindow && glfwGetWindowMonitor(glfwWindow) != nullptr) {
-        m_impl->fail("exclusive GLFW fullscreen is unsupported by the Gate A prototype");
+
+    auto* view = CCEGLView::get();
+    if (!view || (glfwWindow && view->getWindow() != glfwWindow)) {
+        m_impl->fail("unable to validate Geometry Dash fullscreen state");
+        return false;
+    }
+    if (view->getIsFullscreen() && !view->getIsBorderless()) {
+        m_impl->fail("exclusive fullscreen is unsupported by the Gate A prototype");
         return false;
     }
 

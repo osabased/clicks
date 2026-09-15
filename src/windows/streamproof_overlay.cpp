@@ -6,8 +6,8 @@
 
 #include <Geode/Geode.hpp>
 
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
+#include <glfw/glfw3.h>
+#include <glfw/glfw3native.h>
 
 #include <d2d1_1.h>
 #include <d2d1_1helper.h>
@@ -18,7 +18,6 @@
 #include <wrl/client.h>
 
 #include <cstdlib>
-#include <memory>
 #include <string_view>
 
 using Microsoft::WRL::ComPtr;
@@ -163,7 +162,7 @@ struct StreamproofOverlay::Impl {
         wc.lpfnWndProc = overlayWindowProc;
         wc.hInstance = GetModuleHandleW(nullptr);
         wc.lpszClassName = kOverlayClassName;
-        wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+        wc.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));
 
         if (RegisterClassExW(&wc) != 0) {
             return true;
@@ -360,7 +359,9 @@ struct StreamproofOverlay::Impl {
             return false;
         }
 
-        if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory))) {
+        if (FAILED(D2D1CreateFactory(
+                D2D1_FACTORY_TYPE_SINGLE_THREADED,
+                IID_PPV_ARGS(&d2dFactory)))) {
             fail("D2D1 factory creation failed");
             return false;
         }
